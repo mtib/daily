@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import type { DayEntry } from "../types.js";
 import { TaskItem } from "./TaskItem.js";
+import { editableTodayStr } from "../hooks/useTaskStore.js";
 import { ProgressRing } from "./ProgressRing.js";
 
 interface Props {
@@ -26,7 +27,8 @@ function formatDate(dateStr: string): { weekday: string; day: number; month: str
 export const DayCard: FC<Props> = ({ day, isToday, compact = false, onToggle, onSetCount }) => {
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const isPast = day.date < today;
+  const editableToday = editableTodayStr();
+  const isPast = day.date < editableToday;
   const isFuture = day.date > today;
 
   const completed = day.tasks.filter((t) => t.completion_state !== "none").length;

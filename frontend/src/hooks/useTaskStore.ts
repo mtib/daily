@@ -26,6 +26,17 @@ export function todayStr(): string {
   return localDateStr();
 }
 
+// If it's within the first hour of the day, treat yesterday as still editable.
+export function editableTodayStr(): string {
+  const now = new Date();
+  if (now.getHours() < 1) {
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    return localDateStr(yesterday);
+  }
+  return localDateStr(now);
+}
+
 export interface TaskStoreState {
   days: DayEntry[];
   tasks: Task[];
@@ -48,7 +59,7 @@ export function useTaskStore(): TaskStoreState {
     setError(null);
     try {
       const { from, to } = rangeRef.current;
-      const [dayData, taskData] = await Promise.all([fetchDays(from, to, localDateStr()), fetchTasks()]);
+      const [dayData, taskData] = await Promise.all([fetchDays(from, to, editableTodayStr()), fetchTasks()]);
       setDays(dayData);
       setTasks(taskData);
     } catch (e) {
