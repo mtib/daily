@@ -43,11 +43,7 @@ export const TaskItem: FC<Props> = ({ entry, date, isPast, isFuture, onToggle, o
   const showStreak = !isComplete && missed_streak > 0 && !isFuture;
   const isWarning = showStreak && missed_streak >= 2;
 
-  const checkColor = isComplete
-    ? "var(--success)"
-    : isWarning
-    ? "var(--warn)"
-    : "var(--border-strong)";
+  const checkColor = isWarning ? "var(--warn)" : "var(--today-accent)";
 
   function handleDecrement() {
     if (disabled || !onSetCount) return;
@@ -105,7 +101,7 @@ export const TaskItem: FC<Props> = ({ entry, date, isPast, isFuture, onToggle, o
               fontWeight: 700,
               minWidth: "36px",
               textAlign: "center",
-              color: isAtTarget ? "var(--success)" : "var(--fg)",
+              color: "var(--today-accent)",
             }}
           >
             {currentCount}/{task.target_count}
@@ -122,8 +118,8 @@ export const TaskItem: FC<Props> = ({ entry, date, isPast, isFuture, onToggle, o
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: isAtTarget ? "var(--success)" : "var(--today-accent)",
-                borderColor: isAtTarget ? "var(--success)" : "var(--today-accent)",
+                color: "var(--today-accent)",
+                borderColor: "var(--today-accent)",
               }}
             >
               <Plus size={14} />
@@ -150,7 +146,7 @@ export const TaskItem: FC<Props> = ({ entry, date, isPast, isFuture, onToggle, o
               color: checkColor,
               borderColor: checkColor,
               background: isComplete
-                ? "color-mix(in srgb, var(--success) 10%, transparent)"
+                ? "color-mix(in srgb, var(--today-accent) 12%, transparent)"
                 : "transparent",
             }}
           >
