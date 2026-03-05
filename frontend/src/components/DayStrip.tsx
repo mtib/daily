@@ -28,30 +28,32 @@ export const DayStrip: FC<Props> = ({ days, onToggle, onSetCount }) => {
   }, [days, today]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        gap: "12px",
-        overflowX: "auto",
-        padding: "16px",
-        scrollSnapType: "x mandatory",
-        WebkitOverflowScrolling: "touch",
-        scrollBehavior: "smooth",
-        flex: 1,
-        alignItems: "center",
-      }}
-    >
-      {days.map((day) => (
-        <DayCard
-          key={day.date}
-          day={day}
-          isToday={day.date === today}
-          onToggle={onToggle}
-          onSetCount={onSetCount}
-        />
-      ))}
+    <div style={{ flex: 1, display: "flex", alignItems: "center", overflow: "hidden" }}>
+      <div
+        ref={containerRef}
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: "12px",
+          overflowX: "auto",
+          padding: "16px",
+          scrollSnapType: "x mandatory",
+          WebkitOverflowScrolling: "touch",
+          scrollBehavior: "smooth",
+          width: "100%",
+          alignItems: "flex-start",
+        }}
+      >
+        {days.map((day) => (
+          <DayCard
+            key={day.date}
+            day={day}
+            isToday={day.date === today}
+            onToggle={onToggle}
+            onSetCount={onSetCount}
+          />
+        ))}
+      </div>
     </div>
   );
 };
