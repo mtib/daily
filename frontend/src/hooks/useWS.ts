@@ -15,7 +15,7 @@ export function useWS(onMessage: MessageHandler) {
     if (!mountedRef.current) return;
 
     const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const url = `${proto}//${window.location.host}/ws`;
+    const url = `${proto}//${window.location.host}/api/ws`;
     const ws = new WebSocket(url);
     wsRef.current = ws;
 

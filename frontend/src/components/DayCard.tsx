@@ -45,9 +45,15 @@ export const DayCard: FC<Props> = ({ day, isToday, compact = false, onToggle, on
         width: cardWidth,
         minHeight: compact ? "80px" : "220px",
         background: "var(--card-bg)",
-        border: allDone ? "var(--card-border-complete)" : "var(--card-border)",
+        border: isToday && allDone
+          ? "3px solid var(--today-accent)"
+          : isToday
+          ? "1px solid var(--today-accent)"
+          : isPast && allDone
+          ? "1px solid var(--today-accent-muted)"
+          : "var(--card-border)",
         borderRadius: "var(--radius)",
-        boxShadow: isToday ? `0 0 0 2px var(--today-accent)` : "var(--shadow)",
+        boxShadow: "var(--shadow)",
         display: "flex",
         flexDirection: "column",
         transition: "border 0.2s",

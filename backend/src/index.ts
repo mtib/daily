@@ -37,7 +37,7 @@ const server = Bun.serve<WSData>({
   port: PORT,
   fetch(req, server) {
     // Handle WebSocket upgrade
-    if (req.url.endsWith("/ws")) {
+    if (req.url.endsWith("/api/ws")) {
       const user =
         req.headers.get("Tailscale-User") ??
         req.headers.get("X-Webauth-User") ??

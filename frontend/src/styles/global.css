@@ -12,11 +12,12 @@
   --success: #27ae60;
   --card-bg: #ffffff;
   --card-border: 1px solid var(--border);
-  --card-border-complete: 3px solid var(--success);
+  --card-border-complete: 3px solid var(--today-accent);
   --radius: 6px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   --today-accent: #6b21a8;
   --today-accent-text: #6b21a8;
+  --today-accent-muted: color-mix(in srgb, var(--today-accent) 35%, var(--border));
   --font: system-ui, -apple-system, sans-serif;
 }
 
@@ -36,6 +37,7 @@
     /* Lighter purple for dark mode — sufficient contrast on dark backgrounds */
     --today-accent: #a855f7;
     --today-accent-text: #c084fc;
+    --today-accent-muted: color-mix(in srgb, var(--today-accent) 35%, var(--border));
   }
 }
 
