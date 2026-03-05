@@ -24,7 +24,7 @@ interface FormState {
   description: string;
   freq_type: FreqType;
   days_of_week: number[];
-  target_count: number;
+  target_count: number | string;
 }
 
 const defaultForm: FormState = {
@@ -92,7 +92,7 @@ export const TaskManager: FC<Props> = ({ tasks, onClose, onChanged }) => {
         description: form.description.trim() || undefined,
         freq_type: form.freq_type,
         freq_config,
-        target_count: form.target_count,
+        target_count: Math.max(1, parseInt(String(form.target_count)) || 1),
       };
 
       if (editing) {
@@ -262,7 +262,7 @@ export const TaskManager: FC<Props> = ({ tasks, onClose, onChanged }) => {
                 min="1"
                 max="99"
                 value={form.target_count}
-                onChange={(e) => setForm((f) => ({ ...f, target_count: parseInt(e.target.value) || 1 }))}
+                onChange={(e) => setForm((f) => ({ ...f, target_count: e.target.value }))}
               />
             </div>
 
@@ -313,7 +313,7 @@ export const TaskManager: FC<Props> = ({ tasks, onClose, onChanged }) => {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                {tasks.map((task) => (
+                {[...tasks].sort((a, b) => a.name.localeCompare(b.name)).map((task) => (
                   <button
                     key={task.id}
                     onClick={() => startEdit(task)}

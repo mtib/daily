@@ -25,7 +25,7 @@ export const Tooltip: FC<Props> = ({ label, children, placement = "top" }) => {
   const hide = useCallback(() => setVisible(false), []);
 
   return (
-    <span ref={wrapRef} onMouseEnter={show} onMouseLeave={hide} style={{ display: "inline-flex" }}>
+    <span ref={wrapRef} onMouseEnter={show} onMouseLeave={hide} onClick={hide} style={{ display: "inline-flex" }}>
       {children}
       {visible &&
         createPortal(

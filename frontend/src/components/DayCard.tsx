@@ -112,7 +112,7 @@ export const DayCard: FC<Props> = ({ day, isToday, compact = false, onToggle, on
               No tasks
             </div>
           ) : (
-            day.tasks.map((entry) => (
+            [...day.tasks].sort((a, b) => a.task.name.localeCompare(b.task.name)).map((entry) => (
               <TaskItem
                 key={entry.task.id}
                 entry={entry}

@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { Check, ChevronLeft, ChevronRight, Circle, Minus, Plus } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Square, Minus, Plus } from "lucide-react";
 import type { DayTaskEntry } from "../types.js";
 import { Tooltip } from "./Tooltip.js";
 
@@ -22,7 +22,7 @@ export const TaskItem: FC<Props> = ({ entry, date, isPast, isFuture, onToggle, o
       : completion_state !== "none";
   const disabled = isFuture || isPast;
 
-  let CheckIcon: FC<{ size: number }> = ({ size }) => <Circle size={size} />;
+  let CheckIcon: FC<{ size: number }> = ({ size }) => <Square size={size} />;
   let tooltipLabel = "Mark as complete";
 
   switch (completion_state) {
