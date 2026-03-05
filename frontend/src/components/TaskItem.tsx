@@ -22,23 +22,17 @@ export const TaskItem: FC<Props> = ({ entry, date, isPast, isFuture, onToggle, o
       : completion_state !== "none";
   const disabled = isFuture || isPast;
 
-  let CheckIcon: FC<{ size: number }> = ({ size: _size }) => null;
-  let tooltipLabel = "Mark as complete";
-
-  switch (completion_state) {
-    case "this_day":
-      CheckIcon = ({ size }) => <Check size={size} />;
-      tooltipLabel = "Completed — click to unmark";
-      break;
-    case "earlier_in_period":
-      CheckIcon = ({ size }) => <ChevronLeft size={size} />;
-      tooltipLabel = `Completed earlier this ${task.freq_type === "weekly" ? "week" : "month"} — click to unmark`;
-      break;
-    case "later_in_period":
-      CheckIcon = ({ size }) => <ChevronRight size={size} />;
-      tooltipLabel = `Completed later this ${task.freq_type === "weekly" ? "week" : "month"} — click to unmark`;
-      break;
-  }
+  const periodWord = task.freq_type === "weekly" ? "week" : "month";
+  const checkIcon =
+    completion_state === "this_day" ? <Check size={16} /> :
+    completion_state === "earlier_in_period" ? <ChevronLeft size={16} /> :
+    completion_state === "later_in_period" ? <ChevronRight size={16} /> :
+    null;
+  const tooltipLabel =
+    completion_state === "this_day" ? "Completed — click to unmark" :
+    completion_state === "earlier_in_period" ? `Completed earlier this ${periodWord} — click to unmark` :
+    completion_state === "later_in_period" ? `Completed later this ${periodWord} — click to unmark` :
+    "Mark as complete";
 
   const showStreak = !isComplete && missed_streak > 0 && !isFuture;
   const isWarning = showStreak && missed_streak >= 2;
@@ -150,7 +144,7 @@ export const TaskItem: FC<Props> = ({ entry, date, isPast, isFuture, onToggle, o
                 : "transparent",
             }}
           >
-            <CheckIcon size={16} />
+            {checkIcon}
           </button>
         </Tooltip>
       )}
