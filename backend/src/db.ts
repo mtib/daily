@@ -40,6 +40,16 @@ db.exec(`
   );
 
   CREATE UNIQUE INDEX IF NOT EXISTS uq_completion ON completions(task_id, period_key);
+
+  CREATE TABLE IF NOT EXISTS completion_events (
+    id          TEXT PRIMARY KEY,
+    task_id     TEXT NOT NULL REFERENCES tasks(id),
+    user        TEXT NOT NULL,
+    period_key  TEXT NOT NULL,
+    created_at  TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_completion_events_task_period ON completion_events(task_id, period_key);
 `);
 
 export type FreqType = "daily" | "days_of_week" | "weekly" | "monthly";
@@ -55,6 +65,14 @@ export interface Task {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+}
+
+export interface CompletionEvent {
+  id: string;
+  task_id: string;
+  user: string;
+  period_key: string;
+  created_at: string;
 }
 
 export interface Completion {

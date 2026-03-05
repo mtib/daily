@@ -3,9 +3,9 @@ import {
   db,
   getPeriodKey,
   taskAppliesOnDate,
-  getApplicableDaysBefore,
   type Task,
   type Completion,
+  type CompletionEvent,
 } from "../db.js";
 import { broadcastToUser } from "../ws.js";
 
@@ -34,15 +34,45 @@ app.post("/", async (c) => {
   }
 
   const periodKey = getPeriodKey(task.freq_type, date);
-  const id = crypto.randomUUID();
   const now = new Date().toISOString();
+  const newCount: number = count ?? 1;
 
+  // Get existing completion to determine count delta
+  const existing = db
+    .query<Completion, [string, string]>(`SELECT * FROM completions WHERE task_id = ? AND period_key = ?`)
+    .get(task_id, periodKey);
+  const oldCount = existing?.count ?? 0;
+
+  // Upsert the completion record
+  const id = crypto.randomUUID();
   db.run(
     `INSERT INTO completions (id, task_id, user, period_key, actual_date, count, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(task_id, period_key) DO UPDATE SET count = excluded.count, actual_date = excluded.actual_date`,
-    [id, task_id, user, periodKey, date, count ?? 1, now]
+    [id, task_id, user, periodKey, date, newCount, now]
   );
+
+  // Sync completion_events to reflect the delta
+  const delta = newCount - oldCount;
+  if (delta > 0) {
+    // Insert one event per increment
+    for (let i = 0; i < delta; i++) {
+      db.run(
+        `INSERT INTO completion_events (id, task_id, user, period_key, created_at) VALUES (?, ?, ?, ?, ?)`,
+        [crypto.randomUUID(), task_id, user, periodKey, now]
+      );
+    }
+  } else if (delta < 0) {
+    // Delete most-recent events for the decrement
+    const toDelete = db
+      .query<CompletionEvent, [string, string, number]>(
+        `SELECT * FROM completion_events WHERE task_id = ? AND period_key = ? ORDER BY created_at DESC LIMIT ?`
+      )
+      .all(task_id, periodKey, -delta);
+    for (const ev of toDelete) {
+      db.run(`DELETE FROM completion_events WHERE id = ?`, [ev.id]);
+    }
+  }
 
   const completion = db
     .query<Completion, [string, string]>(`SELECT * FROM completions WHERE task_id = ? AND period_key = ?`)
@@ -71,6 +101,7 @@ app.delete("/:task_id/:period", (c) => {
   }
 
   db.run(`DELETE FROM completions WHERE task_id = ? AND period_key = ?`, [task_id, period]);
+  db.run(`DELETE FROM completion_events WHERE task_id = ? AND period_key = ?`, [task_id, period]);
 
   broadcastToUser(user, {
     type: "patch",

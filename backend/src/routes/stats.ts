@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { db, type Task, type Completion } from "../db.js";
+import { db, type Task, type Completion, type CompletionEvent } from "../db.js";
 
 const app = new Hono();
 
@@ -38,6 +38,15 @@ app.get("/", (c) => {
     )
     .all(user);
 
+  // All completion events for this user (one row per individual increment)
+  const allEvents = db
+    .query<CompletionEvent, [string]>(
+      `SELECT e.* FROM completion_events e
+       JOIN tasks t ON t.id = e.task_id
+       WHERE t.user = ?`
+    )
+    .all(user);
+
   // Group completions by task_id
   const byTask = new Map<string, Array<Completion & { created_at: string }>>();
   for (const c of allCompletions) {
@@ -45,8 +54,16 @@ app.get("/", (c) => {
     byTask.get(c.task_id)!.push(c);
   }
 
+  // Group events by task_id
+  const eventsByTask = new Map<string, CompletionEvent[]>();
+  for (const e of allEvents) {
+    if (!eventsByTask.has(e.task_id)) eventsByTask.set(e.task_id, []);
+    eventsByTask.get(e.task_id)!.push(e);
+  }
+
   const stats: TaskStats[] = tasks.map((task) => {
     const completions = byTask.get(task.id) ?? [];
+    const events = eventsByTask.get(task.id) ?? [];
 
     const sortedDates = completions
       .map((c) => c.actual_date)
@@ -83,11 +100,11 @@ app.get("/", (c) => {
     // Sum total count across all completion records (each record may have count > 1)
     const total_completions = completions.reduce((sum, c) => sum + c.count, 0);
 
-    // Histogram: weight each hour bucket by the completion's count
+    // Histogram: one tick per event row (each increment logged individually)
     const completions_by_hour = Array(24).fill(0) as number[];
-    for (const c of completions) {
-      const hour = new Date(c.created_at).getUTCHours();
-      completions_by_hour[hour] += c.count;
+    for (const e of events) {
+      const hour = new Date(e.created_at).getUTCHours();
+      completions_by_hour[hour] += 1;
     }
 
     // Rate: total count vs maximum possible (periods × target per period)
