@@ -59,6 +59,10 @@ export async function fetchDays(from: string, to: string, today: string): Promis
   return handleResponse(await fetch(`${BASE}/days?from=${from}&to=${to}&today=${today}`));
 }
 
+export async function fetchDay(date: string, today: string): Promise<DayEntry> {
+  return handleResponse(await fetch(`${BASE}/days/${date}?today=${today}`));
+}
+
 // Stats
 export async function fetchStats(): Promise<TaskStats[]> {
   return handleResponse(await fetch(`${BASE}/stats`));

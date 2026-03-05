@@ -25,20 +25,7 @@ export interface DayEntry {
   tasks: DayTaskEntry[];
 }
 
-// GET /api/days?from=YYYY-MM-DD&to=YYYY-MM-DD
-app.get("/", (c) => {
-  const user = c.get("user") as string;
-  const from = c.req.query("from");
-  const to = c.req.query("to");
-  const todayParam = c.req.query("today");
-
-  if (!from || !to) {
-    return c.json({ error: "from and to query params are required" }, 400);
-  }
-
-  const today = todayParam ?? new Date().toISOString().substring(0, 10);
-
-  // Get tasks visible in this range (created before end, not deleted before start)
+function buildDayEntries(user: string, from: string, to: string, today: string): DayEntry[] {
   const tasks = db
     .query<Task, [string, string, string]>(
       `SELECT * FROM tasks
@@ -49,7 +36,6 @@ app.get("/", (c) => {
     )
     .all(user, to + "T23:59:59Z", from);
 
-  // Get all completions for these tasks (load all periods; small dataset per user)
   const taskIds = tasks.map((t) => t.id);
   let allCompletions: Completion[] = [];
   if (taskIds.length > 0) {
@@ -61,7 +47,6 @@ app.get("/", (c) => {
       .all(...taskIds);
   }
 
-  // Build lookup: "task_id:period_key" -> completion
   const completionMap = new Map<string, Completion>();
   for (const comp of allCompletions) {
     completionMap.set(`${comp.task_id}:${comp.period_key}`, comp);
@@ -92,24 +77,19 @@ app.get("/", (c) => {
         }
       }
 
-      // Missed streak: consecutive prior applicable days with no completion
       let missed_streak = 0;
-      if (!completion) {
-        // Only count streak for past days (not future)
-        if (dateStr <= today) {
-          const prevDays = getApplicableDaysBefore(task, dateStr, 30);
-          for (const prevDay of prevDays) {
-            const prevPeriodKey = getPeriodKey(task.freq_type, prevDay);
-            if (completionMap.has(`${task.id}:${prevPeriodKey}`)) break;
-            missed_streak++;
-          }
+      if (!completion && dateStr <= today) {
+        const prevDays = getApplicableDaysBefore(task, dateStr, 30);
+        for (const prevDay of prevDays) {
+          const prevPeriodKey = getPeriodKey(task.freq_type, prevDay);
+          if (completionMap.has(`${task.id}:${prevPeriodKey}`)) break;
+          missed_streak++;
         }
       }
 
       dayTasks.push({ task, completion, period_key: periodKey, missed_streak, completion_state });
     }
 
-    // A multi-count task is only "done" for sorting once count >= target_count.
     function isDone(entry: DayTaskEntry): boolean {
       if (entry.task.target_count > 1) {
         return (entry.completion?.count ?? 0) >= entry.task.target_count;
@@ -117,7 +97,6 @@ app.get("/", (c) => {
       return entry.completion_state !== "none";
     }
 
-    // Sort: incomplete with streak first, then incomplete, then complete
     dayTasks.sort((a, b) => {
       const aComplete = isDone(a);
       const bComplete = isDone(b);
@@ -129,7 +108,37 @@ app.get("/", (c) => {
     days.push({ date: dateStr, tasks: dayTasks });
   }
 
-  return c.json(days);
+  return days;
+}
+
+// GET /api/days?from=YYYY-MM-DD&to=YYYY-MM-DD[&today=YYYY-MM-DD]
+app.get("/", (c) => {
+  const user = c.get("user") as string;
+  const from = c.req.query("from");
+  const to = c.req.query("to");
+  const todayParam = c.req.query("today");
+
+  if (!from || !to) {
+    return c.json({ error: "from and to query params are required" }, 400);
+  }
+
+  const today = todayParam ?? new Date().toISOString().substring(0, 10);
+  return c.json(buildDayEntries(user, from, to, today));
+});
+
+// GET /api/days/:date[?today=YYYY-MM-DD]
+app.get("/:date", (c) => {
+  const user = c.get("user") as string;
+  const date = c.req.param("date");
+  const todayParam = c.req.query("today");
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return c.json({ error: "date must be YYYY-MM-DD" }, 400);
+  }
+
+  const today = todayParam ?? new Date().toISOString().substring(0, 10);
+  const entries = buildDayEntries(user, date, date, today);
+  return c.json(entries[0] ?? { date, tasks: [] });
 });
 
 export default app;

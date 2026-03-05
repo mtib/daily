@@ -1,8 +1,10 @@
-import { useState, type FC } from "react";
+import { useState, useCallback, type FC } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DayEntry } from "../types.js";
 import { DayCard } from "./DayCard.js";
 import { Tooltip } from "./Tooltip.js";
+import { fetchDay } from "../api.js";
+import { editableTodayStr } from "../hooks/useTaskStore.js";
 
 interface Props {
   days: DayEntry[];
@@ -30,11 +32,35 @@ export const CalendarView: FC<Props> = ({ days, onToggle, onSetCount }) => {
   const [selectedDate, setSelectedDate] = useState<string | null>(
     localToday()
   );
+  const [extraEntries, setExtraEntries] = useState<Map<string, DayEntry | "loading">>(new Map());
 
   const todayStr = localToday();
 
   // Build a map from date string to DayEntry
   const dayMap = new Map<string, DayEntry>(days.map((d) => [d.date, d]));
+
+  const loadExtraDay = useCallback(async (date: string) => {
+    setExtraEntries(prev => new Map(prev).set(date, "loading"));
+    const entry = await fetchDay(date, editableTodayStr());
+    setExtraEntries(prev => new Map(prev).set(date, entry));
+  }, []);
+
+  function handleSelectDate(date: string, isSelected: boolean) {
+    setSelectedDate(isSelected ? null : date);
+    if (!isSelected && !dayMap.has(date)) {
+      loadExtraDay(date);
+    }
+  }
+
+  async function handleToggle(taskId: string, date: string, periodKey: string, currentlyComplete: boolean) {
+    await onToggle(taskId, date, periodKey, currentlyComplete);
+    if (extraEntries.has(date)) loadExtraDay(date);
+  }
+
+  async function handleSetCount(taskId: string, date: string, periodKey: string, newCount: number) {
+    await onSetCount(taskId, date, periodKey, newCount);
+    if (extraEntries.has(date)) loadExtraDay(date);
+  }
 
   // Compute grid cells for this month
   const firstDay = new Date(Date.UTC(year, month, 1));
@@ -54,18 +80,24 @@ export const CalendarView: FC<Props> = ({ days, onToggle, onSetCount }) => {
     if (month === 0) { setYear(y => y - 1); setMonth(11); }
     else setMonth(m => m - 1);
     setSelectedDate(null);
+    setExtraEntries(new Map());
   }
   function nextMonth() {
     if (month === 11) { setYear(y => y + 1); setMonth(0); }
     else setMonth(m => m + 1);
     setSelectedDate(null);
+    setExtraEntries(new Map());
   }
 
   function cellDateStr(dayNum: number) {
     return `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
   }
 
-  const selectedEntry = selectedDate ? dayMap.get(selectedDate) : undefined;
+  const selectedExtraRaw = selectedDate ? extraEntries.get(selectedDate) : undefined;
+  const selectedEntry = selectedDate
+    ? (dayMap.get(selectedDate) ?? (selectedExtraRaw !== "loading" ? selectedExtraRaw : undefined))
+    : undefined;
+  const selectedLoading = selectedExtraRaw === "loading";
 
   return (
     <div
@@ -156,7 +188,7 @@ export const CalendarView: FC<Props> = ({ days, onToggle, onSetCount }) => {
             return (
               <button
                 key={dateStr}
-                onClick={() => setSelectedDate(isSelected ? null : dateStr)}
+                onClick={() => handleSelectDate(dateStr, isSelected)}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -246,17 +278,17 @@ export const CalendarView: FC<Props> = ({ days, onToggle, onSetCount }) => {
                 weekday: "long", month: "long", day: "numeric", timeZone: "UTC"
               })}
             </div>
-            {selectedEntry ? (
+            {selectedLoading ? (
+              <div style={{ color: "var(--muted)", fontSize: "13px" }}>Loading…</div>
+            ) : selectedEntry ? (
               <DayCard
                 day={selectedEntry}
                 isToday={selectedDate === todayStr}
-                onToggle={onToggle}
-                onSetCount={onSetCount}
+                onToggle={handleToggle}
+                onSetCount={handleSetCount}
               />
             ) : (
-              <div style={{ color: "var(--muted)", fontSize: "13px" }}>
-                No data for this date (outside loaded range).
-              </div>
+              <div style={{ color: "var(--muted)", fontSize: "13px" }}>No tasks for this date.</div>
             )}
           </div>
         )}
