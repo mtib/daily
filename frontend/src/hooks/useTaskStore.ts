@@ -3,6 +3,13 @@ import type { Task, DayEntry, WSMessage } from "../types.js";
 import { fetchDays, fetchTasks, addCompletion, removeCompletion } from "../api.js";
 import { useWS } from "./useWS.js";
 
+function localDateStr(date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 function getDateRange(halfSpan = 14): { from: string; to: string } {
   const today = new Date();
   const from = new Date(today);
@@ -10,13 +17,13 @@ function getDateRange(halfSpan = 14): { from: string; to: string } {
   const to = new Date(today);
   to.setDate(today.getDate() + halfSpan);
   return {
-    from: from.toISOString().substring(0, 10),
-    to: to.toISOString().substring(0, 10),
+    from: localDateStr(from),
+    to: localDateStr(to),
   };
 }
 
 export function todayStr(): string {
-  return new Date().toISOString().substring(0, 10);
+  return localDateStr();
 }
 
 export interface TaskStoreState {

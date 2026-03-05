@@ -11,7 +11,8 @@ interface Props {
 export const DayStrip: FC<Props> = ({ days, onToggle, onSetCount }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrolledRef = useRef(false);
-  const today = new Date().toISOString().substring(0, 10);
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
   // Center today's card on initial load
   useEffect(() => {

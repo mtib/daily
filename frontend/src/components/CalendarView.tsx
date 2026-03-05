@@ -19,13 +19,19 @@ const DAY_HEADERS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export const CalendarView: FC<Props> = ({ days, onToggle, onSetCount }) => {
   const today = new Date();
-  const [year, setYear] = useState(today.getUTCFullYear());
-  const [month, setMonth] = useState(today.getUTCMonth());
+  const localToday = (d = new Date()) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<string | null>(
-    today.toISOString().substring(0, 10)
+    localToday()
   );
 
-  const todayStr = today.toISOString().substring(0, 10);
+  const todayStr = localToday();
 
   // Build a map from date string to DayEntry
   const dayMap = new Map<string, DayEntry>(days.map((d) => [d.date, d]));
@@ -160,17 +166,17 @@ export const CalendarView: FC<Props> = ({ days, onToggle, onSetCount }) => {
                   padding: "6px 2px",
                   minHeight: "56px",
                   borderRadius: "var(--radius)",
-                  border: isSelected
+                  border: isToday
                     ? `2px solid var(--today-accent)`
-                    : isToday
-                    ? `2px solid var(--today-accent)`
+                    : isSelected
+                    ? `2px solid var(--fg)`
                     : allDone
                     ? `1px solid var(--success)`
                     : "1px solid var(--border)",
-                  background: isSelected
-                    ? "color-mix(in srgb, var(--today-accent) 12%, var(--bg))"
-                    : isToday
+                  background: isToday
                     ? "color-mix(in srgb, var(--today-accent) 6%, var(--bg))"
+                    : isSelected
+                    ? "color-mix(in srgb, var(--fg) 8%, var(--bg))"
                     : "var(--card-bg)",
                   opacity: isPast && !isToday && total === 0 ? 0.5 : 1,
                   cursor: "pointer",
