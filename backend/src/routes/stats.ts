@@ -80,20 +80,29 @@ app.get("/", (c) => {
         1;
     }
 
-    // Completions by hour of day (from created_at timestamp)
+    // Sum total count across all completion records (each record may have count > 1)
+    const total_completions = completions.reduce((sum, c) => sum + c.count, 0);
+
+    // Histogram: weight each hour bucket by the completion's count
     const completions_by_hour = Array(24).fill(0) as number[];
     for (const c of completions) {
       const hour = new Date(c.created_at).getUTCHours();
-      completions_by_hour[hour]++;
+      completions_by_hour[hour] += c.count;
     }
+
+    // Rate: total count vs maximum possible (periods × target per period)
+    const possible_total = possible_days * task.target_count;
+    const completion_rate = possible_total > 0
+      ? Math.min(total_completions / possible_total, 1)
+      : 0;
 
     return {
       task,
-      total_completions: completions.length,
+      total_completions,
       last_completed_at: sortedDates.length > 0 ? sortedDates[sortedDates.length - 1] : null,
       first_completion_at: sortedDates.length > 0 ? sortedDates[0] : null,
       possible_days,
-      completion_rate: possible_days > 0 ? Math.min(completions.length / possible_days, 1) : 0,
+      completion_rate,
       completions_by_hour,
       completion_dates: sortedDates,
     };
