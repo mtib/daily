@@ -48,7 +48,7 @@ export function useTaskStore(): TaskStoreState {
     setError(null);
     try {
       const { from, to } = rangeRef.current;
-      const [dayData, taskData] = await Promise.all([fetchDays(from, to), fetchTasks()]);
+      const [dayData, taskData] = await Promise.all([fetchDays(from, to, localDateStr()), fetchTasks()]);
       setDays(dayData);
       setTasks(taskData);
     } catch (e) {

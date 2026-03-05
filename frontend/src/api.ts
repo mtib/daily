@@ -55,8 +55,8 @@ export async function deleteTask(id: string): Promise<void> {
 }
 
 // Days
-export async function fetchDays(from: string, to: string): Promise<DayEntry[]> {
-  return handleResponse(await fetch(`${BASE}/days?from=${from}&to=${to}`));
+export async function fetchDays(from: string, to: string, today: string): Promise<DayEntry[]> {
+  return handleResponse(await fetch(`${BASE}/days?from=${from}&to=${to}&today=${today}`));
 }
 
 // Stats

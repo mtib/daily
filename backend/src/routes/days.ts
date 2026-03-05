@@ -30,10 +30,13 @@ app.get("/", (c) => {
   const user = c.get("user") as string;
   const from = c.req.query("from");
   const to = c.req.query("to");
+  const todayParam = c.req.query("today");
 
   if (!from || !to) {
     return c.json({ error: "from and to query params are required" }, 400);
   }
+
+  const today = todayParam ?? new Date().toISOString().substring(0, 10);
 
   // Get tasks visible in this range (created before end, not deleted before start)
   const tasks = db
@@ -92,7 +95,6 @@ app.get("/", (c) => {
       // Missed streak: consecutive prior applicable days with no completion
       let missed_streak = 0;
       if (!completion) {
-        const today = new Date().toISOString().substring(0, 10);
         // Only count streak for past days (not future)
         if (dateStr <= today) {
           const prevDays = getApplicableDaysBefore(task, dateStr, 30);

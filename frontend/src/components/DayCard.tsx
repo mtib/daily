@@ -24,7 +24,8 @@ function formatDate(dateStr: string): { weekday: string; day: number; month: str
 }
 
 export const DayCard: FC<Props> = ({ day, isToday, compact = false, onToggle, onSetCount }) => {
-  const today = new Date().toISOString().substring(0, 10);
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const isPast = day.date < today;
   const isFuture = day.date > today;
 
