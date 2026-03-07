@@ -8,8 +8,9 @@ interface Props {
   day: DayEntry;
   isToday: boolean;
   compact?: boolean;
-  onToggle: (taskId: string, date: string, periodKey: string, currentlyComplete: boolean) => void;
-  onSetCount?: (taskId: string, date: string, periodKey: string, newCount: number) => void;
+  correctionMode?: boolean;
+  onToggle: (taskId: string, date: string, periodKey: string, currentlyComplete: boolean, completedAt?: string) => void;
+  onSetCount?: (taskId: string, date: string, periodKey: string, newCount: number, completedAt?: string) => void;
 }
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -24,7 +25,7 @@ function formatDate(dateStr: string): { weekday: string; day: number; month: str
   };
 }
 
-export const DayCard: FC<Props> = ({ day, isToday, compact = false, onToggle, onSetCount }) => {
+export const DayCard: FC<Props> = ({ day, isToday, compact = false, correctionMode = false, onToggle, onSetCount }) => {
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const editableToday = editableTodayStr();
@@ -122,6 +123,7 @@ export const DayCard: FC<Props> = ({ day, isToday, compact = false, onToggle, on
                 date={day.date}
                 isPast={isPast}
                 isFuture={isFuture}
+                correctionMode={correctionMode}
                 onToggle={onToggle}
                 onSetCount={onSetCount}
               />

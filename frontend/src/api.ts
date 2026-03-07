@@ -69,12 +69,12 @@ export async function fetchStats(): Promise<TaskStats[]> {
 }
 
 // Completions
-export async function addCompletion(task_id: string, date: string, count?: number): Promise<Completion> {
+export async function addCompletion(task_id: string, date: string, count?: number, completed_at?: string): Promise<Completion> {
   return handleResponse(
     await fetch(`${BASE}/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ task_id, date, count }),
+      body: JSON.stringify({ task_id, date, count, completed_at }),
     })
   );
 }

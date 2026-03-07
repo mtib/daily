@@ -1,5 +1,5 @@
 import { useState, useCallback, type FC } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, PenLine } from "lucide-react";
 import type { DayEntry } from "../types.js";
 import { DayCard } from "./DayCard.js";
 import { Tooltip } from "./Tooltip.js";
@@ -8,8 +8,8 @@ import { editableTodayStr } from "../hooks/useTaskStore.js";
 
 interface Props {
   days: DayEntry[];
-  onToggle: (taskId: string, date: string, periodKey: string, currentlyComplete: boolean) => void;
-  onSetCount: (taskId: string, date: string, periodKey: string, newCount: number) => void;
+  onToggle: (taskId: string, date: string, periodKey: string, currentlyComplete: boolean, completedAt?: string) => void;
+  onSetCount: (taskId: string, date: string, periodKey: string, newCount: number, completedAt?: string) => void;
 }
 
 const MONTH_NAMES = [
@@ -33,6 +33,7 @@ export const CalendarView: FC<Props> = ({ days, onToggle, onSetCount }) => {
     localToday()
   );
   const [extraEntries, setExtraEntries] = useState<Map<string, DayEntry | "loading">>(new Map());
+  const [correctionMode, setCorrectionMode] = useState(false);
 
   const todayStr = localToday();
 
@@ -52,13 +53,13 @@ export const CalendarView: FC<Props> = ({ days, onToggle, onSetCount }) => {
     }
   }
 
-  async function handleToggle(taskId: string, date: string, periodKey: string, currentlyComplete: boolean) {
-    await onToggle(taskId, date, periodKey, currentlyComplete);
+  async function handleToggle(taskId: string, date: string, periodKey: string, currentlyComplete: boolean, completedAt?: string) {
+    await onToggle(taskId, date, periodKey, currentlyComplete, completedAt);
     if (extraEntries.has(date)) loadExtraDay(date);
   }
 
-  async function handleSetCount(taskId: string, date: string, periodKey: string, newCount: number) {
-    await onSetCount(taskId, date, periodKey, newCount);
+  async function handleSetCount(taskId: string, date: string, periodKey: string, newCount: number, completedAt?: string) {
+    await onSetCount(taskId, date, periodKey, newCount, completedAt);
     if (extraEntries.has(date)) loadExtraDay(date);
   }
 
@@ -81,12 +82,14 @@ export const CalendarView: FC<Props> = ({ days, onToggle, onSetCount }) => {
     else setMonth(m => m - 1);
     setSelectedDate(null);
     setExtraEntries(new Map());
+    setCorrectionMode(false);
   }
   function nextMonth() {
     if (month === 11) { setYear(y => y + 1); setMonth(0); }
     else setMonth(m => m + 1);
     setSelectedDate(null);
     setExtraEntries(new Map());
+    setCorrectionMode(false);
   }
 
   function cellDateStr(dayNum: number) {
@@ -127,11 +130,26 @@ export const CalendarView: FC<Props> = ({ days, onToggle, onSetCount }) => {
         <span style={{ fontWeight: 700, fontSize: "16px" }}>
           {MONTH_NAMES[month]} {year}
         </span>
-        <Tooltip label="Next month">
-          <button className="icon-btn" onClick={nextMonth}>
-            <ChevronRight size={18} />
-          </button>
-        </Tooltip>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Tooltip label={correctionMode ? "Correction mode on — click to disable" : "Enable correction mode to edit past tasks"}>
+            <button
+              className="icon-btn"
+              onClick={() => setCorrectionMode(v => !v)}
+              style={{
+                background: correctionMode ? "var(--warn)" : undefined,
+                color: correctionMode ? "#fff" : undefined,
+                borderColor: correctionMode ? "var(--warn)" : undefined,
+              }}
+            >
+              <PenLine size={18} />
+            </button>
+          </Tooltip>
+          <Tooltip label="Next month">
+            <button className="icon-btn" onClick={nextMonth}>
+              <ChevronRight size={18} />
+            </button>
+          </Tooltip>
+        </div>
       </div>
 
       <div style={{ flex: 1, overflow: "auto", padding: "16px" }}>
@@ -284,6 +302,7 @@ export const CalendarView: FC<Props> = ({ days, onToggle, onSetCount }) => {
               <DayCard
                 day={selectedEntry}
                 isToday={selectedDate === todayStr}
+                correctionMode={correctionMode}
                 onToggle={handleToggle}
                 onSetCount={handleSetCount}
               />

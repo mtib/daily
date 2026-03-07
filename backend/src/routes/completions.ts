@@ -15,7 +15,7 @@ const app = new Hono();
 app.post("/", async (c) => {
   const user = c.get("user") as string;
   const body = await c.req.json();
-  const { task_id, date, count } = body;
+  const { task_id, date, count, completed_at } = body;
 
   if (!task_id || !date) {
     return c.json({ error: "task_id and date are required" }, 400);
@@ -35,6 +35,10 @@ app.post("/", async (c) => {
 
   const periodKey = getPeriodKey(task.freq_type, date);
   const now = new Date().toISOString();
+  const eventTimestamp: string =
+    typeof completed_at === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(completed_at)
+      ? completed_at
+      : now;
   const newCount: number = count ?? 1;
 
   // Get existing completion to determine count delta
@@ -59,7 +63,7 @@ app.post("/", async (c) => {
     for (let i = 0; i < delta; i++) {
       db.run(
         `INSERT INTO completion_events (id, task_id, user, period_key, created_at) VALUES (?, ?, ?, ?, ?)`,
-        [crypto.randomUUID(), task_id, user, periodKey, now]
+        [crypto.randomUUID(), task_id, user, periodKey, eventTimestamp]
       );
     }
   } else if (delta < 0) {

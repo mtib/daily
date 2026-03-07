@@ -42,8 +42,8 @@ export interface TaskStoreState {
   tasks: Task[];
   loading: boolean;
   error: string | null;
-  toggleCompletion: (taskId: string, date: string, periodKey: string, currentlyComplete: boolean) => Promise<void>;
-  setCount: (taskId: string, date: string, periodKey: string, newCount: number) => Promise<void>;
+  toggleCompletion: (taskId: string, date: string, periodKey: string, currentlyComplete: boolean, completedAt?: string) => Promise<void>;
+  setCount: (taskId: string, date: string, periodKey: string, newCount: number, completedAt?: string) => Promise<void>;
   reload: () => Promise<void>;
 }
 
@@ -83,12 +83,12 @@ export function useTaskStore(): TaskStoreState {
   }, [reload]);
 
   const toggleCompletion = useCallback(
-    async (taskId: string, date: string, periodKey: string, currentlyComplete: boolean) => {
+    async (taskId: string, date: string, periodKey: string, currentlyComplete: boolean, completedAt?: string) => {
       try {
         if (currentlyComplete) {
           await removeCompletion(taskId, periodKey);
         } else {
-          await addCompletion(taskId, date);
+          await addCompletion(taskId, date, undefined, completedAt);
         }
         await reload();
       } catch (e) {
@@ -101,12 +101,12 @@ export function useTaskStore(): TaskStoreState {
 
   // Set an explicit count for a multi-count task. newCount=0 removes the completion.
   const setCount = useCallback(
-    async (taskId: string, date: string, periodKey: string, newCount: number) => {
+    async (taskId: string, date: string, periodKey: string, newCount: number, completedAt?: string) => {
       try {
         if (newCount <= 0) {
           await removeCompletion(taskId, periodKey);
         } else {
-          await addCompletion(taskId, date, newCount);
+          await addCompletion(taskId, date, newCount, completedAt);
         }
         await reload();
       } catch (e) {

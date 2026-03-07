@@ -4,8 +4,8 @@ import { DayCard } from "./DayCard.js";
 
 interface Props {
   days: DayEntry[];
-  onToggle: (taskId: string, date: string, periodKey: string, currentlyComplete: boolean) => void;
-  onSetCount: (taskId: string, date: string, periodKey: string, newCount: number) => void;
+  onToggle: (taskId: string, date: string, periodKey: string, currentlyComplete: boolean, completedAt?: string) => void;
+  onSetCount: (taskId: string, date: string, periodKey: string, newCount: number, completedAt?: string) => void;
 }
 
 export const DayStrip: FC<Props> = ({ days, onToggle, onSetCount }) => {
